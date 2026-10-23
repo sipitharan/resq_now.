@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ResQNow{% endblock %} | Smart response</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <nav class="nav"><a class="brand" href="{{ url_for('main.index') }}"><span class="brand-mark">+</span><span>ResQNow</span></a><div class="nav-actions">{% if current_user.is_authenticated %}<a href="{{ url_for('main.dashboard') }}">Dashboard</a><a class="nav-user" href="{{ url_for('auth.logout') }}">Sign out</a>{% else %}<a href="{{ url_for('auth.login') }}">Sign in</a><a class="button button-small" href="{{ url_for('auth.register') }}">Get started</a>{% endif %}</div></nav>
+  <main>{% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}<div class="flash-stack">{% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}{% endwith %}{% block content %}{% endblock %}</main>
+  {% if config.REALTIME_PROVIDER == 'pusher' %}<script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>{% else %}<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>{% endif %}
+  <script>
+    window.RESQNOW_REALTIME = {
+      provider: {{ config.REALTIME_PROVIDER|tojson }},
+      key: {{ config.PUSHER_KEY|tojson }},
+      cluster: {{ config.PUSHER_CLUSTER|tojson }},
+      authEndpoint: {{ url_for('api.pusher_auth')|tojson }},
+      channel: {% if current_user.is_authenticated and current_user.role == 'DRIVER' %}{{ ('private-driver-' ~ current_user.driver_profile.id)|tojson }}{% elif current_user.is_authenticated and current_user.role == 'PATIENT' %}{{ ('private-patient-' ~ current_user.patient_profile.id)|tojson }}{% else %}null{% endif %}
+    };
+  </script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body></html>

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Create account{% endblock %}
+{% block content %}
+<section class="auth-layout page-width">
+  <div class="auth-aside">
+    <div class="eyebrow"><span class="pulse-dot"></span> JOIN THE RESPONSE NETWORK</div>
+    <h1>Make the next minute count.</h1>
+    <p>Create a patient account or submit a driver and ambulance profile for admin review before it joins the response network.</p>
+    <div class="aside-note"><span>i</span><div><strong>DRIVER REVIEW</strong><small>Registration is permanent. Admin approval is required before an ambulance is visible to patients.</small></div></div>
+  </div>
+  <form id="registration-form" class="form-panel wide" method="post" enctype="multipart/form-data">
+    <div class="panel-heading"><span class="kicker">ACCOUNT SETUP</span><h2>Create your profile</h2></div>
+    <div class="segmented"><label><input type="radio" name="role" value="PATIENT" {% if request.args.get('role', 'PATIENT')|upper == 'PATIENT' %}checked{% endif %}> Patient</label><label><input type="radio" name="role" value="DRIVER" {% if request.args.get('role', '')|upper == 'DRIVER' %}checked{% endif %}> Driver</label></div>
+    <div class="form-grid">
+      <label>Full name *<input name="name" required minlength="3" placeholder="Your name"></label>
+      <label>Mobile number *<input id="mobile" name="mobile" type="tel" required pattern="([6-9][0-9]{9}|\+91[6-9][0-9]{9}|91[6-9][0-9]{9})" placeholder="e.g. 9080813029"></label>
+      <label>Email<input name="email" type="email" placeholder="you@gmail.com"></label>
+      <label>Password<input id="password" name="password" type="password" required minlength="8" placeholder="At least 8 characters"></label>
+    </div>
+    <div class="driver-fields hidden">
+      <div class="form-grid">
+        <label>Ambulance registration number *<input name="ambulance_number" placeholder="e.g. TN 56 A 2222"></label>
+        <label>Ambulance type *<select name="ambulance_type"><option value="">Select type</option><option>Basic Life Support</option><option>Advanced Life Support</option><option>Patient Transport</option></select></label>
+        <label>Available from *<input name="available_start" type="time"></label>
+        <label>Available to *<input name="available_end" type="time"></label>
+      </div>
+      <label>Driver + ambulance original photo * <small>JPG, JPEG, PNG, or WEBP; max 5 MB</small><input name="photo" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"></label>
+      <p class="form-foot">Upload an original photo showing the driver and ambulance clearly.</p>
+      <input name="location" type="hidden" value="Browser GPS">
+      <input id="latitude" name="latitude" type="hidden"><input id="longitude" name="longitude" type="hidden">
+      <p id="gps-status" class="form-foot">Current GPS location can be shared later from the driver dashboard.</p>
+    </div>
+    <button id="submit-registration" class="button button-red full" type="submit">Create account <span>↗</span></button>
+  </form>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+const form = document.querySelector('#registration-form');
+const driverFields = document.querySelector('.driver-fields');
+function selectedRole() { return form.querySelector('input[name="role"]:checked').value; }
+function updateRole() { driverFields.classList.toggle('hidden', selectedRole() !== 'DRIVER'); }
+form.addEventListener('submit', event => {
+  if (selectedRole() === 'DRIVER' && !form.querySelector('[name="photo"]').files.length) { event.preventDefault(); alert('Please upload an original photo showing both the driver and ambulance.'); }
+});
+form.querySelectorAll('input[name="role"]').forEach(input => input.addEventListener('change', updateRole));
+if (navigator.geolocation) navigator.geolocation.getCurrentPosition(position => { document.querySelector('#latitude').value = position.coords.latitude; document.querySelector('#longitude').value = position.coords.longitude; document.querySelector('#gps-status').textContent = 'Current GPS location captured.'; }, () => { document.querySelector('#gps-status').textContent = 'GPS permission is required for driver registration.'; });
+updateRole();
+</script>
+{% endblock %}
